@@ -13,10 +13,10 @@ const int RIGHT_REV = 5;     // PWM
 const int RIGHT_EN  = 10;
 
 // ----- RC limits -----
-const int RC_MIN = 1500;
-const int RC_MID = 1750;
-const int RC_MAX = 2100;
-const int DEADZONE = 40;
+const int RC_MIN = 900;
+const int RC_MID = 1560;
+const int RC_MAX = 2200;
+const int DEADZONE = 30;
 
 void setup() {
   Serial.begin(9600);
@@ -51,9 +51,9 @@ void loop() {
   int throttle = map(throttlePulse, RC_MIN, RC_MAX, -255, 255);
   int steering = map(steeringPulse, RC_MIN, RC_MAX, -255, 255);
   Serial.print("Steering > ");
-  Serial.println(throttle);
-  Serial.print("Throttle > ");
   Serial.println(steering);
+  Serial.print("Throttle > ");
+  Serial.println(throttle);
   // Deadzone
   if (abs(throttle) < DEADZONE) throttle = 0;
   if (abs(steering) < DEADZONE) steering = 0;
