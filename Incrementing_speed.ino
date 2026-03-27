@@ -27,9 +27,13 @@ int leftSpeed = 0;
 int rightSpeed = 0;
 
 // Smooth ramp speed (higher = faster response)
-int rampStep = 10;
+int rampStep = 25;
 
-void setup() {
+// ===== Timing =====
+unsigned long lastLoopTime = 0;
+const unsigned long loopInterval = 20; // ms — replaces delay(20)
+
+void setup(){
   pinMode(throttlePin, INPUT);
   pinMode(steeringPin, INPUT);
 
@@ -45,6 +49,10 @@ void setup() {
 }
 
 void loop() {
+  unsigned long now = millis();
+  if (now - lastLoopTime < loopInterval) return; // non-blocking wait
+  lastLoopTime = now;
+
   // ===== Read Receiver Signals =====
   int throttlePulse = pulseIn(throttlePin, HIGH, 25000);
   int steeringPulse = pulseIn(steeringPin, HIGH, 25000);
@@ -57,7 +65,6 @@ void loop() {
   Serial.print("stopPulse > ");
   Serial.println(stopPulse);
   */
-  
 
   // Safety check (if signal lost)
   if (throttlePulse == 0 || steeringPulse == 0) {
@@ -81,52 +88,48 @@ void loop() {
   if (abs(throttle) < DEADZONE) throttle = 0;
   if (abs(steering) < DEADZONE) steering = 0;
 
-  //Constrain Values
-  if (throttle > 255) throttle = 255;
-  if (steering > 255) steering = 255;
+  // Constrain Values
+  if (throttle >  255) throttle =  255;
+  if (steering >  255) steering =  255;
   if (throttle < -255) throttle = -255;
   if (steering < -255) steering = -255;
-
 
   // ===== Differential Mixing =====
   leftTarget  = throttle + steering;
   rightTarget = throttle - steering;
 
-  //Constrain Values
-  if(leftTarget > 255) leftTarget = 255;
-  if(leftTarget < -255) leftTarget = -255;
-  if(rightTarget > 255) rightTarget = 255;
-  if(rightTarget < -255) rightTarget = -255;
+  // Constrain Values
+  if (leftTarget  >  255) leftTarget  =  255;
+  if (leftTarget  < -255) leftTarget  = -255;
+  if (rightTarget >  255) rightTarget =  255;
+  if (rightTarget < -255) rightTarget = -255;
 
   // ===== Smooth Acceleration =====
-  leftSpeed = ramp(leftSpeed, leftTarget);
+  leftSpeed  = ramp(leftSpeed,  leftTarget);
   rightSpeed = ramp(rightSpeed, rightTarget);
 
-  //Print Values
+  // Print Values
   Serial.print("Left_Speed > ");
   Serial.println(leftSpeed);
   Serial.print("Right_Speed > ");
   Serial.println(rightSpeed);
 
-  //Constrain Values
-  if(leftSpeed > 255) leftSpeed = 255;
-  if(leftSpeed < -255) leftSpeed = -255;
-  if(rightSpeed > 255) rightSpeed = 255;
-  if(rightSpeed < -255) rightSpeed = -255;
+  // Constrain Values
+  if (leftSpeed  >  255) leftSpeed  =  255;
+  if (leftSpeed  < -255) leftSpeed  = -255;
+  if (rightSpeed >  255) rightSpeed =  255;
+  if (rightSpeed < -255) rightSpeed = -255;
 
   // ===== Drive Motors =====
-  if(stopPulse <= 2000){
+  if (stopPulse <= 2000) {
     setMotor(ENA, IN1, IN2, leftSpeed);
     setMotor(ENB, IN3, IN4, rightSpeed);
-  }else{
+  } else {
     setMotor(ENA, IN1, IN2, 0);
     setMotor(ENB, IN3, IN4, 0);
-    leftSpeed = 0;
+    leftSpeed  = 0;
     rightSpeed = 0;
   }
-
-
-  delay(20); // small loop delay
 }
 
 // ===== Smooth Ramp Function =====
